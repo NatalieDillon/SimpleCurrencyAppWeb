@@ -11,6 +11,8 @@ namespace SimpleCurrencyApp.classes
     {
         private readonly string _baseUrl;
         private readonly string _apiKey;
+        private readonly HttpClient _httpClient;
+
         private readonly JsonSerializerOptions _options = new()
         {
             PropertyNameCaseInsensitive = true
@@ -18,38 +20,32 @@ namespace SimpleCurrencyApp.classes
 
         public CurrencyLoader(string baseUrl, string apiKey)
         {
+            _httpClient = new HttpClient();
             _baseUrl = baseUrl;
             _apiKey = apiKey;
         }
 
-
         private async Task<RatesDto> LoadRatesDataAsync()
         {
-            string url = $"{_baseUrl}/latest.json?app_id={_apiKey}";            
-            RatesDto result = new();
-            using (var client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                result = JsonSerializer.Deserialize<RatesDto>(responseBody, _options) ?? new();
-            }
+            string url = $"{_baseUrl}/latest.json?app_id={_apiKey}";
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            RatesDto result = JsonSerializer.Deserialize<RatesDto>(responseBody, _options) ?? new();
             return result;
         }
 
         private async Task<Dictionary<string, string>> LoadCurrencyInfoAsync()
         {
             string url = $"{_baseUrl}/currencies.json?app_id={_apiKey}";
-            Dictionary<string, string> result = new();
-            using (var client = new HttpClient())
-            {
-                HttpResponseMessage response = await client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                result = JsonSerializer.Deserialize<Dictionary<string, string>>(responseBody, _options) ?? new();
-            }
+            HttpResponseMessage response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            Dictionary<string, string> result = JsonSerializer.Deserialize<Dictionary<string, string>>(responseBody, _options) ?? new();
             return result;
         }
+
+
 
         public async Task<CurrencyConverter> LoadCurrencyDataAsync()
         {
